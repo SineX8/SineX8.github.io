@@ -28,7 +28,7 @@
 <li>substr</li>
 <li>substring</li>
 <li>sleep </li>
-<li>select<br>and被过滤掉了比较不好办，于是尝试替换成%26%26(&amp;&amp;)，发现是可行的：<br><img src="//sinex8.github.io/2019/06/22/CTF打怪升级录-sqli-SCUCTF-登陆一下/%26%26%E6%9C%AA%E8%A2%AB%E8%BF%87%E6%BB%A4%EF%BC%88&&%EF%BC%89.jpg" alt="&amp;&amp;未被绕过"></li>
+<li>select<br>and被过滤掉了比较不好办，于是尝试替换成%26%26(&amp;&amp;)，发现是可行的：<br><img src="//sinex8.github.io/2019/06/22/CTF打怪升级录-sqli-SCUCTF-登陆一下/%E7%BB%95WAF2.jpg" alt="&amp;&amp;未被绕过"></li>
 </ul>
 <p>空格虽然被过滤了，但是所幸括号没有被过滤，所以空格被过滤无关紧要。</p>
 <p>可以看到盲注中重要的函数mid\substr\substring全被WAF挡下来了，但是还有两个函数被忽略了,strcmp和left是可以使用的：<br><img src="//sinex8.github.io/2019/06/22/CTF打怪升级录-sqli-SCUCTF-登陆一下/strcmp+left%E5%8F%AF%E7%94%A8.jpg" alt="strcmp+left可用"></p>
