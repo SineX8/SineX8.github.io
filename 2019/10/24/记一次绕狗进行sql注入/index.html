@@ -13,7 +13,7 @@
 <li>中间件：APACHE 2.4</li>
 <li>数据库：MySql</li>
 <li>WAF名称：<a href="http://www.safedog.cn/" target="_blank" rel="noopener">安全狗</a></li>
-<li>WAF版本：Windows APACHE版 4.0<br><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E7%89%88%E6%9C%AC%E4%BF%A1%E6%81%AF.jpg" alt="版本信息"></li>
+<li>WAF版本：Windows APACHE版 4.0</li>
 </ul>
 <h2 id="WAF安装"><a href="#WAF安装" class="headerlink" title="WAF安装"></a><strong>WAF安装</strong></h2><p>安全狗的安装还蛮自动化的，需要注意的是如果使用的是phpstudy，可能会出现无法找到apache服务名的问题：<a href="https://blog.csdn.net/nzjdsds/article/details/93740686" target="_blank" rel="noopener">解决方案</a></p>
 <h2 id="WAF绕过"><a href="#WAF绕过" class="headerlink" title="WAF绕过"></a><strong>WAF绕过</strong></h2><p>测试用的网页来自于sqlilabs第一关，这一关是字符型注入。<br>首先判断sql语句里有几列，需要使用order by来查看<br>尝试?id=1’ order by 1#<br><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%871.png" alt="拦截"><br>结果肯定是被waf拦截，尝试?id=1’ order xby 1%23<br><img src="//sinex8.github.io/2019/10/24/记一次绕狗进行sql注入/%E5%9B%BE%E7%89%872.png" alt="未被拦截"><br>出现报错，接下来就考虑用各种姿势替换掉x<br>尝试了以下几种：（%23=#，%0a=换行符）</p>
